@@ -1,15 +1,16 @@
-const {tracksModel} = require('../models');
+const TrackSchema = require('../models/nosql/tracks');
 const { matchedData } = require('express-validator');
 const { handleHttpEror } = require('../utils/handleError');
 
 /**
- * Obtener lista de la base de datos
+ * List tracks
  */
 const getItems = async (req, res) => {
     try {
-        const data = await tracksModel.findAllData({});
+        const data = await TrackSchema.findAllData({});
         res.send({data});
     } catch (err) {
+        console.log(err);
         handleHttpEror(res, 'ERROR_GET_ITEMS'); 
     }
 
@@ -17,13 +18,19 @@ const getItems = async (req, res) => {
 }
 
 /**
- * Obtener un detalle
+ * Detail a track
  */
 const getItem = async (req, res) => {
     try {
         req = matchedData(req);
         const { id } = req;
-        const data = await tracksModel.findOneData(id);
+        const data = await TrackSchema.findOneData(id);
+
+        if(!data){
+            handleHttpEror(res, 'NOT_FOUND', 404);
+            return;
+        };
+
         res.send({data});
     } catch (err) {
         handleHttpEror(res, 'ERROR_GET_ITEM'); 
@@ -31,12 +38,12 @@ const getItem = async (req, res) => {
 }
 
 /**
- * Insertar un registro 
+ * Create track
  */
 const createItem = async (req, res) => {
     try {
         const body = matchedData(req);
-        const data = await tracksModel.create(body);
+        const data = await TrackSchema.create(body);
         res.send({data});
     } catch (err) {
         handleHttpEror(res, 'ERROR_CREATE_ITEM');
@@ -45,12 +52,17 @@ const createItem = async (req, res) => {
 }
 
 /**
- * Actualizar un registro
+ * Update track
  */
 const updateItem = async (req, res) => {
     try {
-        const { id, ...body } = matchedData(req); // obtiene el id y lo que resta lo guarda en una cte llamada body, esto es para pasar los parametros por separado en el findOneAndUpdate
-        const data = await tracksModel.findOneAndUpdate(id, body);
+        const data = await TrackSchema.findOneAndUpdate(id, body);
+
+        if(!data){
+            handleHttpEror(res, 'NOT_FOUND', 404);
+            return;
+        };
+
         res.send({data});
     } catch (err) {
         handleHttpEror(res, 'ERROR_UPDATE_ITEM');
@@ -58,13 +70,19 @@ const updateItem = async (req, res) => {
 }
 
 /**
- * Eliminar un registro
+ * Soft delete a track
  */
 const deleteItem = async (req, res) => {
     try {
         req = matchedData(req);
         const { id } = req;
-        const data = await tracksModel.delete({_id:id}); // elimina el id que sea igual a _id (asi es como aparece en mongo)
+        const data = await TrackSchema.delete({_id:id});
+
+        if(!data){
+            handleHttpEror(res, 'NOT_FOUND', 404);
+            return;
+        };
+
         res.send({data});
     } catch (err) {
         handleHttpEror(res, 'ERROR_DELETE_ITEM'); 

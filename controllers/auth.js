@@ -1,21 +1,22 @@
 const { matchedData } = require('express-validator');
-const {usersModel} = require('../models');
+const UserSchema = require('../models/nosql/user');
 const {encrypt, compare} = require('../utils/handlePassword');
 const { tokenSign } = require('../utils/handleJwt');
 const {handleHttpEror} = require('../utils/handleError');
 
 const registerCtrl = async (req, res) =>{
     try {
-        req = matchedData(req);
-        const password = await encrypt(req.password);
-        const body = {...req, password};
-        const dataUser = await usersModel.create(body);
-        dataUser.set('password', undefined, {strict: false}); // esto es para que no devuelva la contraseña en el response
+
+        const password = await encrypt(req.body.password);
+        const body = {...req.body, password};
+        const dataUser = await UserSchema.create(body);
+        dataUser.set('password', undefined, {strict: false});
 
         const data = {
             token: await tokenSign(dataUser),
             user: dataUser
         };
+
         res.send({data});
     } catch (error) {
         console.log(error);
@@ -25,19 +26,18 @@ const registerCtrl = async (req, res) =>{
 
 const loginCtrl = async (req, res) => {
     try {
-        req = matchedData(req);
-        const user = await usersModel.findOne({email: req.email}); 
+        const user = await UserSchema.findOne({email: req.body.email}); 
         
         if(!user){
-            handleHttpError(res, 'USER_NOT_EXIST', 404);
+            handleHttpEror(res, 'USER_NOT_EXIST', 404);
             return;
         };
 
         const hashPassword = user.password;
-        const check = await compare(req.password, hashPassword);
+        const check = await compare(req.body.password, hashPassword);
 
         if(!check){
-            handleHttpError(res, 'PASSWORD_INVALID', 401);
+            handleHttpEror(res, 'PASSWORD_INVALID', 401);
             return;
         };
 
@@ -51,7 +51,8 @@ const loginCtrl = async (req, res) => {
         res.send({data});
     
     } catch (err) {
-        handleHttpError(res, 'ERROR_LOGIN_USER', 404);
+        console.log(err);
+        handleHttpEror(res, 'ERROR_LOGIN_USER', 404);
     }
 }
 

@@ -11,11 +11,10 @@ const StorageSchema = new mongoose.Schema(
         }
     },
     {
-        timestamps: true, //para la fecha de creacion y actualizacion
+        timestamps: true,
         versionkey: false
     }
 );
 
-//le decimos al model que use softdelete
 StorageSchema.plugin(mongooseDelete, {overrideMethods: 'all'});
 module.exports = mongoose.model('storages', StorageSchema);

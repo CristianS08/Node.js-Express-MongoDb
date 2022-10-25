@@ -6,28 +6,31 @@ const {authMiddleware} = require('../middleware/session');
 const {checkRole} = require('../middleware/role');
 
 /**
- * Listar los tracks
+ * List tracks
  */
 router.get('/', authMiddleware, getItems);
 
 /**
- * Crear un track
+ * Create a track
+ * Onli for admin
  */
 router.post('/', validatorCreateItem, authMiddleware, checkRole(['admin']), createItem);
 
 /**
- * Obtener un track
+ * Detail a track
  */
 router.get('/:id',validatorGetItem, authMiddleware, getItem);
 
 /**
- * actualizar un track
+ * Update a track
+ * Onli for admin
  */
- router.put('/:id',validatorGetItem, validatorCreateItem, authMiddleware, checkRole, updateItem);
+ router.put('/:id',validatorGetItem, validatorCreateItem, authMiddleware, checkRole(['admin']), updateItem);
 
  /**
- * Eliminar un track
+ * Delete a track
+ * Onli for admin
  */
-  router.delete('/:id',validatorGetItem, authMiddleware, checkRole, deleteItem);
+  router.delete('/:id',validatorGetItem, authMiddleware, checkRole(['admin']), deleteItem);
 
-module.exports = router;
+module.exports = router; 

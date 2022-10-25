@@ -14,8 +14,7 @@ const UserSchema = new mongoose.Schema(
             unique: true
         },
         password: {
-            type: String,
-            select: false
+            type: String
         },
         role: {
             type: ['user', 'admin'],
@@ -23,11 +22,10 @@ const UserSchema = new mongoose.Schema(
         }
     },
     {
-        timestamps: true, //para la fecha de creacion y actualizacion
+        timestamps: true,
         versionkey: false
     }
 );
 
-//le decimos al model que use softdelete
 UserSchema.plugin(mongooseDelete, {overrideMethods: 'all'});
 module.exports = mongoose.model('users', UserSchema);

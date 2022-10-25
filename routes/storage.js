@@ -5,22 +5,22 @@ const { validatorGetItem } = require('../validators/storage');
 const {createItem, getItem, getItems, deleteItem} = require('../controllers/storage');
 
 /**
- * Crear un item
+ * Update a file
  */
 router.post('/', uploadMiddleware.single('myfile'), createItem);
 
 /**
- * Listar items
+ * List files
  */
 router.get('/', getItems);
 
 /**
- * Obtener un detalle
+ * Detail file
  */
 router.get('/:id', validatorGetItem, getItem);
 
 /**
- * Eliminar un item
+ * Delete file
  */
 router.delete('/:id', validatorGetItem, deleteItem);
 

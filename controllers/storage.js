@@ -1,5 +1,5 @@
 const { matchedData } = require('express-validator');
-const {storagesModel} = require('../models');
+const StorageSchema = require('../models/nosql/storage');
 const { handleHttpEror } = require('../utils/handleError');
 const fs = require('fs');
 
@@ -7,11 +7,13 @@ const PUBLIC_URL = process.env.PUBLIC_URL;
 const MEDIA_PATH = `${__dirname}/../storage`;
 
 /**
- * Obtener lista de la base de datos
+ * List files
  */
 const getItems = async (req, res) => {
     try {
-        const data = await storagesModel.find({});
+        const data = await StorageSchema.find({})
+        .select('url filename');
+
         res.send({data});
     } catch (err) {
         handleHttpEror(res, 'ERROR_GET_ITEMS');
@@ -19,33 +21,41 @@ const getItems = async (req, res) => {
 }
 
 /**
- * Obtener un detalle
+ * Detail file
  */
 const getItem = async (req, res) => {
     try {
         const { id } = matchedData(req);
-        const data = await storagesModel.findById(id);
+
+        const data = await StorageSchema.findById(id)
+        .select('url filename');
+
+        if(!data){
+            handleHttpEror(res, 'NOT_FOUND', 404);
+            return;
+        }
         res.send({data});
     } catch (err) {
         handleHttpEror(res, 'ERROR_GET_ITEM'); 
     }
 }
+
 /**
- * Insertar un registro 
+ * Upload file
  */
 const createItem = async (req, res) => {
     try {
-        const {body, file} = req;
-        console.log(file);
+        const {file} = req;
 
         const fileData = {
             filename: file.filename,
             url: `${PUBLIC_URL}/${file.filename}`
         }
 
-        const data = await storagesModel.create(fileData);
+        const data = await StorageSchema.create(fileData);
         res.send({data});
     } catch (err) {
+        console.log(err);
         handleHttpEror(res, 'ERROR_CREATE_ITEM');
     }
 }
@@ -56,7 +66,7 @@ const createItem = async (req, res) => {
 /* const updateItem = async (req, res) => {
     try {
         try {
-            const { id, ...body } = matchedData(req); // obtiene el id y lo que resta lo guarda en una cte llamada body, esto es para pasar los parametros por separado en el findOneAndUpdate
+            const { id, ...body } = matchedData(req); 
             const data = await tracksModel.findOneAndUpdate(id, body);
             res.send({data});
         } catch (err) {
@@ -68,24 +78,32 @@ const createItem = async (req, res) => {
 } */
 
 /**
- * Eliminar un registro de manera permanente
+ * Strong delete file
  */
 const deleteItem = async (req, res) => {
     try {
-        const { id } = matchedData(req);
-        const dataFile = await storagesModel.findById(id);
-        await storagesModel.deleteOne(id);
+        const { _id } = matchedData(req);
+        const dataFile = await StorageSchema.findOne(_id);
+
+        if(!dataFile){
+            handleHttpEror(res, 'NOT_FOUND', 404);
+            return;
+        };
+
+        await StorageSchema.deleteOne(_id);
+
         const { filename } = dataFile;
         const filePath = `${MEDIA_PATH}/${filename}`;
-
-        fs.unlinkSync(filePath); // este metodo elimina un archivo, y se le indica la ruta absoluta de ese archivo
+        fs.unlinkSync(filePath);
+        
         const data = {
             filePath,
             deleted: 1
         }
         res.send({data});
     } catch (err) {
-        handleHttpEror(res, 'ERROR_GET_ITEM'); 
+        console.log(err);
+        handleHttpEror(res, 'ERROR_DELETE_ITEM'); 
     }
 }
 
